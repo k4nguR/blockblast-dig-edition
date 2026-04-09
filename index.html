@@ -375,6 +375,7 @@
         rewardQueue: [],
         rewardSeen: new Set(),
         rewardImageDeck: [],
+        rewardImageCandidates: [],
         rewardActive: null,
         scoreToasts: [],
         specialRackCooldown: 0,
@@ -468,6 +469,7 @@
         state.rewardQueue = [];
         state.rewardSeen = new Set();
         state.rewardImageDeck = createShuffledCopy(REWARD_IMAGES);
+        state.rewardImageCandidates = [];
         state.rewardActive = null;
         state.scoreToasts = [];
         state.specialRackCooldown = 0;
@@ -802,6 +804,36 @@
         return arr;
       }
 
+      function startRewardImageLoad(imagePath) {
+        rewardFallback.classList.remove("show");
+        rewardImage.style.display = "block";
+        state.rewardImageCandidates = buildRewardImageCandidates(imagePath);
+        loadNextRewardImageCandidate();
+      }
+
+      function loadNextRewardImageCandidate() {
+        if (!state.rewardImageCandidates.length) {
+          rewardImage.style.display = "none";
+          rewardFallback.classList.add("show");
+          return;
+        }
+        rewardImage.src = state.rewardImageCandidates.shift();
+      }
+
+      function buildRewardImageCandidates(imagePath) {
+        const clean = String(imagePath || "").replace(/^\.?\//, "");
+        const normalized = clean.startsWith("rewards/") ? clean : `rewards/${clean}`;
+        const candidates = [
+          normalized,
+          `./${normalized}`,
+          `/${normalized}`,
+          `../${normalized}`,
+          `block/${normalized}`,
+          `/block/${normalized}`
+        ];
+        return [...new Set(candidates)];
+      }
+
       function showNextReward() {
         if (!state.rewardQueue.length) {
           state.rewardActive = null;
@@ -811,9 +843,7 @@
         const reward = state.rewardQueue.shift();
         state.rewardActive = reward;
 
-        rewardFallback.classList.remove("show");
-        rewardImage.style.display = "block";
-        rewardImage.src = reward.image;
+        startRewardImageLoad(reward.image);
 
         rewardOverlay.classList.remove("hidden");
       }
@@ -828,8 +858,12 @@
       }
 
       rewardImage.addEventListener("error", () => {
-        rewardImage.style.display = "none";
-        rewardFallback.classList.add("show");
+        loadNextRewardImageCandidate();
+      });
+
+      rewardImage.addEventListener("load", () => {
+        rewardFallback.classList.remove("show");
+        rewardImage.style.display = "block";
       });
 
       continueRewardBtn.addEventListener("click", () => {
