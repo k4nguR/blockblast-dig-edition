@@ -277,7 +277,7 @@
 <body>
   <div class="app">
     <header class="brand" aria-label="Nagłówek gry">
-      <h1 class="brand-title">Block Blast</h1>
+      <h1 class="brand-title">Ceteris Paribus</h1>
       <p class="brand-sub">Classic 8x8</p>
     </header>
 
@@ -1359,21 +1359,14 @@
       }
 
       function drawBlock(x, y, size, color, alpha = 1, scale = 1) {
-        const pad = size * 0.07;
-        const s = (size - pad * 2) * scale;
-        const ox = x + (size - s) * 0.5;
-        const oy = y + (size - s) * 0.5;
-        const bx = ox + pad;
-        const by = oy + pad;
+        const baseInner = size * 0.9;
+        const s = baseInner * scale;
+        const bx = x + (size - s) * 0.5;
+        const by = y + (size - s) * 0.5;
         const r = s * 0.24;
 
         ctx.save();
         ctx.globalAlpha = alpha;
-
-        // Miękki cień pod spodem, żeby klocek wyglądał na "wypukły".
-        drawRoundedRect(bx + s * 0.02, by + s * 0.06, s, s, r);
-        ctx.fillStyle = "rgba(19, 44, 80, 0.2)";
-        ctx.fill();
 
         const bodyGradient = ctx.createLinearGradient(bx, by, bx, by + s);
         bodyGradient.addColorStop(0, shiftHexColor(color, 0.34));
