@@ -337,14 +337,14 @@
       const NORMAL_SHAPE_WEIGHT = 1;
 
       const COLORS = [
-        "#63B7FF",
-        "#6EDFA3",
-        "#FFB95E",
-        "#FF7C92",
+        "#59BEFF",
+        "#6FD96E",
+        "#FFB44D",
+        "#FF768D",
         "#7E93FF",
-        "#FFCD53",
-        "#A787FF",
-        "#47CFBF"
+        "#FFD65A",
+        "#B27AFF",
+        "#45D6C2"
       ];
 
       const REWARD_THRESHOLDS = [
@@ -1359,23 +1359,50 @@
       }
 
       function drawBlock(x, y, size, color, alpha = 1, scale = 1) {
-        const pad = size * 0.08;
+        const pad = size * 0.07;
         const s = (size - pad * 2) * scale;
         const ox = x + (size - s) * 0.5;
         const oy = y + (size - s) * 0.5;
+        const bx = ox + pad;
+        const by = oy + pad;
+        const r = s * 0.24;
 
         ctx.save();
         ctx.globalAlpha = alpha;
 
-        drawRoundedRect(ox + pad, oy + pad, s, s, s * 0.24);
-        ctx.fillStyle = color;
+        // Miękki cień pod spodem, żeby klocek wyglądał na "wypukły".
+        drawRoundedRect(bx + s * 0.02, by + s * 0.06, s, s, r);
+        ctx.fillStyle = "rgba(19, 44, 80, 0.2)";
         ctx.fill();
-        ctx.strokeStyle = "rgba(22, 52, 92, 0.14)";
-        ctx.lineWidth = Math.max(1, s * 0.05);
+
+        const bodyGradient = ctx.createLinearGradient(bx, by, bx, by + s);
+        bodyGradient.addColorStop(0, shiftHexColor(color, 0.34));
+        bodyGradient.addColorStop(0.58, color);
+        bodyGradient.addColorStop(1, shiftHexColor(color, -0.24));
+        drawRoundedRect(bx, by, s, s, r);
+        ctx.fillStyle = bodyGradient;
+        ctx.fill();
+
+        ctx.strokeStyle = shiftHexColor(color, -0.42);
+        ctx.lineWidth = Math.max(1, s * 0.045);
         ctx.stroke();
 
-        drawRoundedRect(ox + pad + s * 0.08, oy + pad + s * 0.08, s * 0.84, s * 0.32, s * 0.12);
-        ctx.fillStyle = "rgba(255,255,255,0.3)";
+        const topGloss = ctx.createLinearGradient(bx, by, bx, by + s * 0.42);
+        topGloss.addColorStop(0, "rgba(255,255,255,0.54)");
+        topGloss.addColorStop(1, "rgba(255,255,255,0)");
+        drawRoundedRect(bx + s * 0.09, by + s * 0.08, s * 0.82, s * 0.34, s * 0.12);
+        ctx.fillStyle = topGloss;
+        ctx.fill();
+
+        const sideShine = ctx.createLinearGradient(bx + s * 0.07, by, bx + s * 0.4, by);
+        sideShine.addColorStop(0, "rgba(255,255,255,0.22)");
+        sideShine.addColorStop(1, "rgba(255,255,255,0)");
+        drawRoundedRect(bx + s * 0.07, by + s * 0.16, s * 0.3, s * 0.64, s * 0.11);
+        ctx.fillStyle = sideShine;
+        ctx.fill();
+
+        drawRoundedRect(bx + s * 0.14, by + s * 0.8, s * 0.72, s * 0.11, s * 0.05);
+        ctx.fillStyle = "rgba(21, 43, 74, 0.14)";
         ctx.fill();
 
         ctx.restore();
@@ -1523,6 +1550,28 @@
         const g = (int >> 8) & 255;
         const b = int & 255;
         return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+      }
+
+      function shiftHexColor(hex, amount) {
+        const normalized = hex.replace("#", "");
+        const value = normalized.length === 3
+          ? normalized.split("").map((ch) => ch + ch).join("")
+          : normalized;
+        const int = parseInt(value, 16);
+        const r = (int >> 16) & 255;
+        const g = (int >> 8) & 255;
+        const b = int & 255;
+
+        const adjust = (channel) => (
+          amount >= 0
+            ? channel + (255 - channel) * amount
+            : channel * (1 + amount)
+        );
+
+        const nr = Math.max(0, Math.min(255, Math.round(adjust(r))));
+        const ng = Math.max(0, Math.min(255, Math.round(adjust(g))));
+        const nb = Math.max(0, Math.min(255, Math.round(adjust(b))));
+        return `rgb(${nr}, ${ng}, ${nb})`;
       }
 
       function update(now) {
